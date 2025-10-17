@@ -1,0 +1,32 @@
+name: CI Debug
+on: { workflow_dispatch: {} }
+jobs:
+  dbg:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          set -euxo pipefail
+          echo "Top-level:"; ls -la
+          echo "app:"; ls -la app || true
+          test -f app/requirements.txt
+          test -f app/main.py
+          test -d app/tests
+      - uses: actions/setup-python@v4
+        with: { python-version: "3.10" }
+      - run: |
+          set -euxo pipefail
+          pip install -r app/requirements.txt
+          pip install pytest pytest-flask pytest-cov
+          [ -f app/__init__.py ] || touch app/__init__.py
+          pytest -q app/tests/ || (echo "PYTEST_FAIL=1" >> $GITHUB_ENV; exit 1)
+      - run: docker version
+      - shell: bash
+        env:
+          DU: ${{ secrets.DOCKERHUBUSERNAME }}
+          DT: ${{ secrets.DOCKERHUBTOKEN }}
+        run: |
+          set -euxo pipefail
+          [ -n "${DU:-}" ] && echo "DOCKERHUBUSERNAME is SET" || (echo "DOCKERHUBUSERNAME is EMPTY"; exit 2)
+          [ -n "${DT:-}" ] && echo "DOCKERHUBTOKEN is SET"    || (echo "DOCKERHUBTOKEN is EMPTY"; exit 2)
+
