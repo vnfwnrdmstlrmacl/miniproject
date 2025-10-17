@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: miniproject
-          image: zmsdlfsktdma/miniproject:latest   # 👉 여기에 네 Docker Hub 아이디
+          image: zmsdlfsktdma/miniproject:389b8060eb09182e325e2314bbcbb45de4880466
           imagePullPolicy: Always                     # 항상 최신 이미지로
           ports:
             - containerPort: 5000
