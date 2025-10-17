@@ -6,5 +6,5 @@ resources:
 
 images:
   - name: zmsdlfsktdma/miniproject
-    newTag: "REPLACE_ME_TAG"
+    newTag: "389b8060eb09182e325e2314bbcbb45de4880466"
 
