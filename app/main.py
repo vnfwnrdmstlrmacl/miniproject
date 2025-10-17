@@ -3,6 +3,14 @@ from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 
+@app.get("/health")
+def health():
+    return "ok", 200
+
+# 기존 Flask 실행 부분은 그대로 유지
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
+
 def add(a, b):
     return a + b
 
