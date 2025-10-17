@@ -1,4 +1,4 @@
-name: CI - Test, SonarQube, and Docker Build
+name: CI - Tests and Docker Push (no Sonar temp)
 
 on:
   push:
@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Set up Python
@@ -21,25 +21,19 @@ jobs:
       - name: Install deps (prod + dev)
         run: |
           pip install -r app/requirements.txt
-          if [ -f dev-requirements.txt ]; then pip install -r dev-requirements.txt; fi
+          # dev-requirements가 없으면 pytest만 깔아준다 (안전장치)
+          if [ -f dev-requirements.txt ]; then pip install -r dev-requirements.txt; else pip install pytest pytest-flask pytest-cov; fi
+
+      - name: Ensure package import works
+        run: |
+          # app/__init__.py 없으면 만들어준다 (ModuleNotFoundError 예방)
+          [ -f app/__init__.py ] || touch app/__init__.py
 
       - name: Run tests with coverage
-        run: |
-          pytest app/tests/ --maxfail=1 --disable-warnings --cov=app --cov-report xml
+        run: pytest app/tests/ --maxfail=1 --disable-warnings -q
 
-      # ✅ 공식 SonarQube 액션 사용 (별도 설치 불필요)
-      # 주의: 아래 URL이 GitHub 러너에서 접근 가능한 공인 IP/도메인이어야 함
-      - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@v2
-        env:
-          SONAR_TOKEN: ${{ secrets.SONARTOKEN }}
-          SONAR_HOST_URL: http://<YOUR_SONARQUBE_SERVER_IP>:9000
-        with:
-          projectBaseDir: .
-          args: >
-            -Dsonar.projectKey=miniproject
-            -Dsonar.sources=app
-            -Dsonar.python.coverage.reportPaths=coverage.xml
+      - name: Docker info (debug)
+        run: docker version
 
       - name: Login to Docker Hub
         run: echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
