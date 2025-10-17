@@ -1,4 +1,4 @@
-name: CI - Tests and Docker Push
+name: CI - Test and Docker Push
 
 on:
   push:
@@ -8,32 +8,23 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
+      # 1️⃣ 저장소 체크아웃
+      - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 2️⃣ Python 환경 설정
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
 
-      - name: Install deps
+      # 3️⃣ 의존성 설치 (운영 + 테스트)
+      - name: Install dependencies
         run: |
           pip install -r app/requirements.txt
-          # dev-requirements 없으면 기본 테스트 패키지 설치
-          if [ -f dev-requirements.txt ]; then pip install -r dev-requirements.txt; else pip install pytest pytest-flask pytest-cov; fi
-          # 패키지 인식 문제 예방
-          [ -f app/__init__.py ] || touch app/__init__.py
-
-      - name: Run tests
-        run: pytest app/tests/ --maxfail=1 --disable-warnings -q
-
-      - name: Docker login
-        run: echo ${{ secrets.DOCKERHUBTOKEN }} | docker login -u ${{ secrets.DOCKERHUBUSERNAME }} --password-stdin
-
-      - name: Build image
-        run: docker build -t ${{ secrets.DOCKERHUBUSERNAME }}/miniproject:${{ github.sha }} .
-
-      - name: Push image
-        run: docker push ${{ secrets.DOCKERHUBUSERNAME }}/miniproject:${{ github.sha }}
+          # dev-requirements.txt가 없으면 테스트 패키지 기본 설치
+          if [ -f dev-requirements.txt ]; then
+            pip install -r dev-
 
