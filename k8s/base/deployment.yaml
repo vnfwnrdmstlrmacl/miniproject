@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: miniproject
+  labels:
+    app: miniproject
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: miniproject
+  template:
+    metadata:
+      labels:
+        app: miniproject
+    spec:
+      containers:
+        - name: miniproject
+          image: your-dockerhub-username/miniproject:latest
+          ports:
+            - containerPort: 5000
+
