@@ -1,4 +1,4 @@
-name: CI - Test and SonarQube
+name: CI - Test, SonarQube, and Docker Build
 
 on:
   push:
@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Python
@@ -21,18 +21,27 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r app/requirements.txt
-          pip install pytest sonar-scanner
+          pip install -r dev-requirements.txt
 
       - name: Run tests
-        run: pytest app/tests/
+        run: pytest app/tests/ --maxfail=1 --disable-warnings -q
 
-      - name: SonarQube scan
+      - name: SonarQube Scan
         env:
-          SONAR_TOKEN: ${{ secrets.sonartoken }}
+          SONAR_TOKEN: ${{ secrets.SONARTOKEN }}
         run: |
           sonar-scanner \
             -Dsonar.projectKey=miniproject \
             -Dsonar.sources=app \
             -Dsonar.host.url=http://<YOUR_SONARQUBE_SERVER_IP>:9000 \
             -Dsonar.login=$SONAR_TOKEN
+
+      - name: Login to Docker Hub
+        run: echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+
+      - name: Build Docker image
+        run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/miniproject:${{ github.sha }} .
+
+      - name: Push Docker image
+        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/miniproject:${{ github.sha }}
 
