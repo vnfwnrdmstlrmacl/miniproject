@@ -1,0 +1,38 @@
+name: CI - Test and SonarQube
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          pip install -r app/requirements.txt
+          pip install pytest sonar-scanner
+
+      - name: Run tests
+        run: pytest app/tests/
+
+      - name: SonarQube scan
+        env:
+          SONAR_TOKEN: ${{ secrets.sonartoken }}
+        run: |
+          sonar-scanner \
+            -Dsonar.projectKey=miniproject \
+            -Dsonar.sources=app \
+            -Dsonar.host.url=http://<YOUR_SONARQUBE_SERVER_IP>:9000 \
+            -Dsonar.login=$SONAR_TOKEN
+
