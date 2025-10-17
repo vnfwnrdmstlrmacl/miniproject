@@ -20,7 +20,7 @@ jobs:
         with:
           python-version: "3.10"
 
-      # 3) 의존성 설치 (dev-requirements가 없으면 기본 테스트 패키지 설치)
+      # 3) 의존성 설치 (dev-requirements 없으면 기본 테스트 패키지 설치)
       - name: Install dependencies
         shell: bash
         run: |
@@ -28,47 +28,41 @@ jobs:
           pip install -r app/requirements.txt
           pip install -r dev-requirements.txt || pip install pytest pytest-flask pytest-cov
 
-      # 4) app을 패키지로 인식시키기 (__init__.py 없으면 생성)
+      # 4) app 패키지 인식 (__init__.py 없으면 생성)
       - name: Ensure app is a Python package
         shell: bash
         run: |
           set -euxo pipefail
           [ -f app/__init__.py ] || touch app/__init__.py
 
-      # 5) (디버그) 작업 디렉터리/파일 구조 확인 - 필요 없으면 지워도 됨
-      - name: Debug workspace
-        shell: bash
-        run: |
-          set -euxo pipefail
-          echo "CWD: $(pwd)"
-          echo "Top-level:"; ls -la
-          echo "app/: "; ls -la app
-
-      # 6) 테스트 실행 - 레포 루트를 PYTHONPATH에 추가
+      # 5) 테스트 (레포 루트를 PYTHONPATH에 추가)
       - name: Run tests
         shell: bash
         run: |
           set -euxo pipefail
           PYTHONPATH="$PWD" pytest app/tests/ --maxfail=1 --disable-warnings -q
 
-      # 7) Docker Hub 로그인 (시크릿: DOCKERHUBUSERNAME / DOCKERHUBTOKEN)
+      # 6) Docker Hub 로그인 (시크릿: DOCKERHUBUSERNAME / DOCKERHUBTOKEN)
       - name: Docker login
         shell: bash
         run: |
           set -euxo pipefail
           echo ${{ secrets.DOCKERHUBTOKEN }} | docker login -u ${{ secrets.DOCKERHUBUSERNAME }} --password-stdin
 
-      # 8) Docker 이미지 빌드
-      - name: Build image
+      # 7) 이미지 빌드(:SHA) 및 latest 태그 추가
+      - name: Build image (sha + latest)
         shell: bash
         run: |
           set -euxo pipefail
           docker build -t ${{ secrets.DOCKERHUBUSERNAME }}/miniproject:${{ github.sha }} .
+          docker tag  ${{ secrets.DOCKERHUBUSERNAME }}/miniproject:${{ github.sha }} \
+                      ${{ secrets.DOCKERHUBUSERNAME }}/miniproject:latest
 
-      # 9) Docker Hub 푸시
-      - name: Push image
+      # 8) 이미지 푸시 (둘 다)
+      - name: Push images
         shell: bash
         run: |
           set -euxo pipefail
           docker push ${{ secrets.DOCKERHUBUSERNAME }}/miniproject:${{ github.sha }}
+          docker push ${{ secrets.DOCKERHUBUSERNAME }}/miniproject:latest
 

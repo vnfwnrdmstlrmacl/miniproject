@@ -16,7 +16,21 @@ spec:
     spec:
       containers:
         - name: miniproject
-          image: your-dockerhub-username/miniproject:latest
+          image: zmsdlfsktdma/miniproject:latest   # 👉 여기에 네 Docker Hub 아이디
+          imagePullPolicy: Always                     # 항상 최신 이미지로
           ports:
             - containerPort: 5000
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          env:
+            - name: FLASK_ENV
+              value: production
+            - name: PORT
+              value: "5000"
+      restartPolicy: Always
 
